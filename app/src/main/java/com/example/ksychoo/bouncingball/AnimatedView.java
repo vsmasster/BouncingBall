@@ -6,13 +6,17 @@ package com.example.ksychoo.bouncingball;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
-public class AnimatedView extends ImageView{
+public class AnimatedView extends ImageView implements SensorEventListener{
     private Context mContext;
     double x = -1;
     double y = -1;
@@ -24,11 +28,17 @@ public class AnimatedView extends ImageView{
     private double lastTime;
     BitmapDrawable ball;
 
+    private SensorManager sensorManager;
+
+
     public AnimatedView(Context context, AttributeSet attrs)  {
         super(context, attrs);
         mContext = context;
         h = new Handler();
         lastTime = System.currentTimeMillis() / 100.0;
+
+        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
 
         ball = (BitmapDrawable) mContext.getResources().getDrawable(R.drawable.ball);
 
@@ -78,5 +88,17 @@ public class AnimatedView extends ImageView{
         }
         c.drawBitmap(ball.getBitmap(), (int)x, (int)y, null);
         h.postDelayed(r, FRAME_RATE);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType()==Sensor.TYPE_ACCELEROMETER){
+            xVelocity = event.values[0] * (-2.0);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }
