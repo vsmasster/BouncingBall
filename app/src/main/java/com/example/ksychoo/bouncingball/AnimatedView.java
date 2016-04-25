@@ -8,21 +8,43 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.ImageView;
+
 public class AnimatedView extends ImageView{
     private Context mContext;
-    int x = -1;
-    int y = -1;
-    private int xVelocity = 10;
-    private int yVelocity = 5;
+    double x = -1;
+    double y = -1;
+    private double xVelocity = 0;
+    private double g = 10.0;
+    private double yVelocity = 0;
     private Handler h;
     private final int FRAME_RATE = 30;
+    private double lastTime;
+    BitmapDrawable ball;
 
     public AnimatedView(Context context, AttributeSet attrs)  {
         super(context, attrs);
         mContext = context;
         h = new Handler();
+        lastTime = System.currentTimeMillis() / 100.0;
+
+        ball = (BitmapDrawable) mContext.getResources().getDrawable(R.drawable.ball);
+
+        this.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                x = event.getX() - ball.getBitmap().getWidth() / 2;
+                y = event.getY() - ball.getBitmap().getHeight() / 2;
+
+                xVelocity = 0;
+                yVelocity = 0;
+                return false;
+            }
+        });
     }
+
     private Runnable r = new Runnable() {
         @Override
         public void run() {
@@ -30,21 +52,31 @@ public class AnimatedView extends ImageView{
         }
     };
     protected void onDraw(Canvas c) {
-        BitmapDrawable ball = (BitmapDrawable) mContext.getResources().getDrawable(R.drawable.ball);
         if (x<0 && y <0) {
             x = this.getWidth()/2;
             y = this.getHeight()/2;
         } else {
+            double currTime = System.currentTimeMillis() / 100.0;
+            yVelocity += (currTime - lastTime) * g;
+            lastTime = currTime;
+
             x += xVelocity;
             y += yVelocity;
+
             if ((x > this.getWidth() - ball.getBitmap().getWidth()) || (x < 0)) {
                 xVelocity = xVelocity*-1;
+                if (x < 0) x = 0;
+                else x = this.getWidth() - ball.getBitmap().getWidth();
             }
             if ((y > this.getHeight() - ball.getBitmap().getHeight()) || (y < 0)) {
                 yVelocity = yVelocity*-1;
+                yVelocity += g;
+                if (y < 0) y = 0;
+                else y = this.getHeight() - ball.getBitmap().getHeight();
             }
+
         }
-        c.drawBitmap(ball.getBitmap(), x, y, null);
+        c.drawBitmap(ball.getBitmap(), (int)x, (int)y, null);
         h.postDelayed(r, FRAME_RATE);
     }
 }
