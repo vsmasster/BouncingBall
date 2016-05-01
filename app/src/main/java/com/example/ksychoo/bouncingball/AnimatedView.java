@@ -4,6 +4,7 @@ package com.example.ksychoo.bouncingball;
  * Created by ksychoo on 24.04.16.
  */
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Sensor;
@@ -21,8 +22,9 @@ public class AnimatedView extends ImageView implements SensorEventListener{
     double x = -1;
     double y = -1;
     private double xVelocity = 0;
-    private double g = 10.0;
     private double yVelocity = 0;
+    private double xGravity = 0;
+    private double yGravity = 0;
     private Handler h;
     private final int FRAME_RATE = 30;
     private double lastTime;
@@ -38,8 +40,7 @@ public class AnimatedView extends ImageView implements SensorEventListener{
         lastTime = System.currentTimeMillis() / 100.0;
 
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY), SensorManager.SENSOR_DELAY_NORMAL);
         ball = (BitmapDrawable) mContext.getResources().getDrawable(R.drawable.ball);
 
         this.setOnTouchListener(new OnTouchListener() {
@@ -67,7 +68,8 @@ public class AnimatedView extends ImageView implements SensorEventListener{
             y = this.getHeight()/2;
         } else {
             double currTime = System.currentTimeMillis() / 100.0;
-            yVelocity += (currTime - lastTime) * g;
+            yVelocity += (currTime - lastTime) * yGravity;
+            xVelocity += (currTime - lastTime) * xGravity;
             lastTime = currTime;
 
             x += xVelocity;
@@ -80,7 +82,6 @@ public class AnimatedView extends ImageView implements SensorEventListener{
             }
             if ((y > this.getHeight() - ball.getBitmap().getHeight()) || (y < 0)) {
                 yVelocity = yVelocity*-1;
-                yVelocity += g;
                 if (y < 0) y = 0;
                 else y = this.getHeight() - ball.getBitmap().getHeight();
             }
@@ -92,8 +93,9 @@ public class AnimatedView extends ImageView implements SensorEventListener{
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType()==Sensor.TYPE_ACCELEROMETER){
-            xVelocity = event.values[0] * (-2.0);
+        if (event.sensor.getType()==Sensor.TYPE_GRAVITY){
+            xGravity = event.values[0] * (-1.0);
+            yGravity = event.values[1];
         }
     }
 
